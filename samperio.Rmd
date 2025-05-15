@@ -1,0 +1,293 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+list.files('~') #are all the files present?
+d1=read.table('RTestData.txt', header=TRUE)
+d1
+fuso #doesn't work "object not found"
+d1$fuso
+attach(d1)
+fuso #this works because d1 needs to be attached
+```
+
+
+```{r d1$strep}
+hist(d1$strep)
+qqnorm(d1$strep) #does not look linear
+lstrep<-log(d1$strep) #log transform
+#lstrep
+#d1$strep #just checking they are different
+hist(lstrep) #wow looks much better
+qqnorm(lstrep) 
+#log transform looks linear
+```
+
+```{r t tests}
+t.test(d1$strep,d1$fuso) #pval=0.001117 t=3.358 #Welch Two Sample t-test (unpaired)
+t.test(lstrep,d1$fuso)#pval=8.04e-16 t=-10.219
+```
+The p-value and t statistic changed when the data was log transformed because it reduced variability of our data points.  
+
+```{r primer}
+d2=read.csv('primer-1.csv',header=FALSE) #Put in the same directory as your R script
+attach(d2)
+d2 #show dataframe
+d2$V1 #is null
+d2$Plate.Name
+```
+
+```{r subsetting data}
+newdata=d1[order(time),] #ordered our data based on time
+time1=subset(d1, time=='1') #creates a new dataframe with only time 1 observations
+
+## based on variable values
+#newdata <- mydata[ which(mydata$gender=='F'& mydata$age > 65), ]
+```
+
+```{r writing files}
+write.csv(time1,"time1.csv")
+```
+
+-----RLAB 1.2 -----
+
+```{r }
+head(airquality)
+head(ToothGrowth)
+
+attach(airquality)
+attach(ToothGrowth)
+airquality<-airquality
+ToothGrowth<-ToothGrowth
+#lairquality<-log(airquality)
+#rankaq<-rank(airquality) does not make new data frame, creates a value
+```
+
+```{r Normality on airquality}
+#ozone
+qqnorm(Ozone)
+hist(Ozone)
+shapiro.test(Ozone)
+#ozone not normal
+
+#Solar.R
+qqnorm(Solar.R)
+hist(Solar.R)
+shapiro.test(Solar.R)
+#Solar.R not normal 
+
+#wind
+qqnorm(Wind)
+hist(Wind)
+shapiro.test(Wind)
+#pvalue of 0.1 so technically can be called normal 
+
+#Temp
+qqnorm(Temp)
+hist(Temp)
+shapiro.test(Temp)
+#temp not normally distributed
+
+```
+
+```{r Normality on ToothGrowth}
+#length
+qqnorm(len)
+hist(len)
+shapiro.test(len)
+#len does not look good on figures but passes Shapiro normality test as normal.
+```
+
+```{r transforming OZONE}
+lozone<-log(Ozone)
+qqnorm(lozone)
+hist(lozone)
+shapiro.test(lozone)
+
+sqozone<-sqrt(Ozone)
+qqnorm(sqozone)
+hist(sqozone)
+shapiro.test(sqozone)
+
+ranked_ozone<-rank(Ozone)
+qqnorm(ranked_ozone)
+hist(ranked_ozone)
+shapiro.test(ranked_ozone)
+
+inverse_ozone <- 1 / Ozone
+qqnorm(inverse_ozone)
+hist(inverse_ozone)
+shapiro.test(inverse_ozone)
+
+cube_root_ozone <- Ozone^(1/3)
+qqnorm(cube_root_ozone)
+hist(cube_root_ozone)
+shapiro.test(cube_root_ozone)#fail to reject null! NORMAL!!
+
+```
+
+```{r transforming Solar.R}
+lsolar<-log(Solar.R)
+qqnorm(lsolar)
+hist(lsolar)
+shapiro.test(lsolar)
+
+sqsolar<-sqrt(Solar.R)
+qqnorm(sqsolar)
+hist(sqsolar)
+shapiro.test(sqsolar)
+
+ranked_solar<-rank(Solar.R)
+qqnorm(Solar.R)
+hist(Solar.R)
+shapiro.test(Solar.R) #best p=9.492e-06
+
+inverse_solar <- 1 / Solar.R
+qqnorm(inverse_solar)
+hist(inverse_solar)
+shapiro.test(inverse_solar)
+
+cube_root_solar <- Solar.R^(1/3)
+qqnorm(cube_root_solar)
+hist(cube_root_solar)
+shapiro.test(cube_root_solar)
+
+#none of these look good so will choose the highest p
+
+```
+
+```{r transforming Ozone}
+lozone<-log(Ozone)
+qqnorm(lozone)
+hist(lozone)
+shapiro.test(lozone)
+
+sqozone<-sqrt(Ozone)
+qqnorm(sqozone)
+hist(sqozone)
+shapiro.test(sqozone)
+
+ranked_ozone<-rank(Ozone)
+qqnorm(ranked_ozone)
+hist(ranked_ozone)
+shapiro.test(ranked_ozone)
+
+inverse_ozone <- 1 / Ozone
+qqnorm(inverse_ozone)
+hist(inverse_ozone)
+shapiro.test(inverse_ozone)
+
+cube_root_ozone <- Ozone^(1/3)
+qqnorm(cube_root_ozone)
+hist(cube_root_ozone)
+shapiro.test(cube_root_ozone)#fail to reject null! NORMAL!!
+
+```
+
+```{r transforming Temp}
+lTemp<-log(Temp)
+qqnorm(lTemp)
+hist(lTemp)
+shapiro.test(lTemp)
+
+sqtemp<-sqrt(Temp)
+qqnorm(sqtemp)
+hist(sqtemp) #looks the best
+shapiro.test(sqtemp) #p=0.001
+
+ranked_temp<-rank(Temp)
+qqnorm(ranked_temp)
+hist(ranked_temp)
+shapiro.test(ranked_temp)
+
+inverse_temp <- 1 / Temp
+qqnorm(inverse_temp)
+hist(inverse_temp)
+shapiro.test(inverse_temp)
+
+cube_root_temp <- Temp^(1/3)
+qqnorm(cube_root_temp)
+hist(cube_root_temp)
+shapiro.test(cube_root_temp)
+```
+
+```{r scatterplots airquality}
+#will be using the ranked transformations
+
+#Ozone vs Temp
+m1<-ggplot(airquality, aes(x = ranked_ozone , y = ranked_temp )) +
+  geom_point(color = "red")+geom_abline()
+m1
+
+#Ozone vs wind
+m2<-ggplot(airquality, aes(x = ranked_ozone , y = Wind )) +
+  geom_point(color = "blue")+geom_abline()
+m2
+
+#Ozone vs Solar.R
+m3<-ggplot(airquality, aes(x=ranked_ozone,y=ranked_solar)) +
+  geom_point()+geom_abline()
+m3
+
+#temp vs wind 
+m4<-ggplot(airquality, aes(x=ranked_temp,y=Wind)) +
+  geom_point()+geom_abline() #does wind need to be transformed too?
+m4
+
+#temp vs solar
+m5<-ggplot(airquality, aes(x=ranked_temp,y=ranked_solar)) +
+  geom_point()+geom_abline()
+m5
+
+#wind vs solar
+m6<-ggplot(airquality, aes(x=Wind,y=ranked_solar)) +
+  geom_point()+geom_abline()
+m6
+
+```
+
+```{r scatterplots toothgrowth}
+#No scatter since only 1 continous variable
+```
+
+```{r correlations}
+cor(ranked_ozone,ranked_solar)
+cor(ranked_ozone,ranked_temp)
+cor(ranked_ozone,Wind)
+cor(ranked_solar,Wind)
+cor(ranked_solar,ranked_temp)
+cor(ranked_temp,Wind)
+```
+
+```{r}
+#p.adjust(p_values, method = "fdr")
+#p.adjust(p_values, method = "bonferroni")
+```
+
+```{r toothgrowth anova}
+tooth<-lm(data=ToothGrowth,len~supp)
+anova(tooth)
+summary(tooth)
+
+doselm <- lm(len ~ dose, data = ToothGrowth)
+summary(doselm) #this displays regression results
+```
+
+```{r airquality anova}
+model1 <- lm(temp ~ factor(Month), data = airquality)
+anova(model1)
+
+cor(Ozone, Solar.R,use = "complete.obs")
+cor(Wind,Temp,use = "complete.obs")
+#use = "complete.obs" gets rid of NA
+```
+
+
+
+
+ˆ

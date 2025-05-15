@@ -1,0 +1,223 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+
+testdata<-read.table("RTestData-1.txt",header=TRUE)
+attach(testdata)
+testdata$time<-as.factor(testdata$time)
+```
+
+Normality check & data transformation
+(1) Make histograms, run qqnorm and qqline of all bacteria and “deepest”.
+(2) Transform variables if non-normal and repeat histogram, qqnorm, qqline on
+transformed data. For transformations I suggest trying either sqrt() or log().
+(3) Example: lepto=sqrt(lepto
+
+```{r normality check}
+hist(strep)
+qqnorm(strep)
+qqline(strep)
+shapiro.test(strep) #not normal
+
+hist(prev)
+qqnorm(prev)
+qqline(prev)
+shapiro.test(prev) #not normal
+
+hist(lepto)
+qqnorm(lepto)
+qqline(lepto)
+shapiro.test(lepto) #not normal
+
+hist(fuso)
+qqnorm(fuso)
+qqline(fuso)
+shapiro.test(fuso) #normal!
+
+hist(veil)
+qqnorm(veil)
+qqline(veil)
+shapiro.test(veil) #not normal
+
+hist(deepest)
+qqnorm(deepest)
+qqline(deepest)
+shapiro.test(deepest) #nice and normal! 
+
+```
+
+```{r transformations and normality check}
+#strep
+lstrep<-log(strep)
+qqnorm(lstrep)
+hist(lstrep)
+shapiro.test(lstrep) #nice and normal
+
+#prev
+lprev<-log(prev+1)
+qqnorm(lprev) #error in plot.window(...) : need finite 'ylim' values
+hist(lprev)
+shapiro.test(lprev) #NA
+
+sprev<-sqrt(prev+1)
+qqnorm(lprev) #error in plot.window(...) : need finite 'ylim' values
+qqline(lprev)
+hist(lprev)
+shapiro.test(lprev) #NA
+
+rprev<-rank(prev)
+qqnorm(rprev)
+hist(rprev)
+shapiro.test(rprev)
+
+#lepto
+loglepto<-log(lepto)
+hist(loglepto)
+qqnorm(loglepto)
+qqline(loglepto)
+shapiro.test(loglepto)
+
+slepto<-sqrt(lepto)
+hist(slepto)
+qqnorm(slepto)
+qqline(slepto)
+shapiro.test(slepto) #normal!
+
+```
+
+One-way ANOVA and summary and boxplots:
+(1) Lepto by time
+(2) Strep by time
+```{r Lepto by time}
+m1<-lm(slepto~time)
+anova(m1) #pvalue 0.02 
+summary(m1)
+boxplot(slepto,time)
+```
+
+```{r Strep by time}
+m2<-lm(lstrep~time)
+anova(m2) #pvalue 0.3
+summary(m2)
+boxplot(lstrep,time)
+
+```
+
+Correlation analysis (cor.test)
+(1) Strep vs. prev
+(2) Strep vs. fuso
+(3) Fuso vs. lepto
+
+```{r}
+#(1) Strep vs. prev
+cor.test(lstrep,prev) #pvalue 0.002
+#(2) Strep vs. fuso
+cor.test(lstrep,fuso) #pvalue 6.981e-05 #highly correlated
+#(3) Fuso vs. lepto
+cor.test(fuso,slepto) #pvalue 0.7453
+
+```
+
+Linear regressions
+Use the lm command and use plot and abline to produce graphs.
+(1) Strep vs. deepest
+(2) Fuso vs. deepest
+```{r}
+#(1) Strep vs. deepest
+m3<-lm(lstrep~deepest)
+plot(m3)
+abline(m3)
+#(2) Fuso vs. deepest
+m4<-lm(fuso~deepest)
+plot(m4)
+abline(m4)
+```
+
+Produce the following graphs:
+(1) ggplot histogram of prev variable.
+(2) ggplot scatterplot of strep by deepest, colored by time
+(3) ggplot scatterplot of fuso by deepest
+(4) Same as 3 but use smoothing algorithm
+
+```{r}
+library(ggplot2)
+histo<-ggplot(data=testdata, aes(x = prev))+geom_histogram()
+histo
+```
+
+```{r}
+sp<-ggplot(data=testdata,aes(x=deepest,y=lstrep,color = time))+geom_point()
+sp
+```
+
+```{r}
+sp2<-ggplot(data=testdata, aes(x = deepest, y = fuso)) + geom_point()
+sp2
+```
+
+```{r}
+sp3<-ggplot(data=testdata, aes(x = deepest, y = fuso)) + 
+  geom_point()+geom_smooth(method = lm)
+sp3
+```
+
+Part C: Vegan analysis
+
+```{r}
+library(vegan)
+```
+1) Calculate alpha diversity (Shannon) for the dataset.
+(2) Rarefy the data and make a plot using rarecurve.
+(3) Calculate Bray-Curtis dissimilarity matrix, show the matrix and plot a histogram.
+```{r}
+newdata=testdata[2:6]
+shannon <- diversity(newdata)
+shannon
+```
+
+```{r}
+raremin <- min(rowSums(newdata))
+raremin
+newdata$strep<-as.integer(newdata$strep+1)
+newdata$prev<-as.integer(newdata$prev+1)
+newdata$lepto<-as.integer(newdata$lepto+1)
+newdata$fuso<-as.integer(newdata$fuso+1)
+newdata$veil<-as.integer(newdata$veil+1)
+sRare <- rarefy(newdata, raremin) #function accepts only integers (counts)
+sRare
+rarecurve(newdata, col = "blue")
+```
+
+```{r}
+bray = vegdist(newdata, "bray")
+bray
+hist(bray)
+```
+
+(1) Make a multidimensional scaling plot using the Bray-Curtis matrix.
+(2) Color the plot by status, then time.
+
+```{r}
+mds <- metaMDS(comm = newdata, distance = "bray", trace = FALSE, autotransform = FALSE)
+plot(mds$points)
+MDS_xy <- data.frame(mds$points)
+
+MDS_xy$status <- testdata$status
+MDS_xy$time <- testdata$time
+
+#status plot
+ggplot(MDS_xy, aes(MDS1, MDS2, color = status)) +
+  geom_point() +
+  theme_bw()
+
+#time plot
+ggplot(MDS_xy, aes(MDS1, MDS2, color = time)) +
+  geom_point() +
+  theme_bw()
+```
+
